@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+#Author: Vincent Choo
+#Date: 10/17/2023
+#UWNet ID: ysc9
+#Homework 2: Part 2 Spellcheck
+#
+#Puts mispelled words of the given in a new file. Then states the number of
+#mispelled words and unique mispelled words.
+
+#Throws an error if there is no inputs
+if [ $# -eq 0 ]
+then
+  echo "Usage: spellcheck filename ..." 1>&2
+  exit 1
+fi
+
+#Iterates through all the inputs files
+while [ $# -gt 0 ]
+do
+  #Throws and error if the file is not a valid file
+  if [ ! -f "$1" ]
+  then
+    echo "$0: error: $1 does not exist - skipping." 1>&2
+    shift
+    continue
+  fi
+
+  file="$1"
+  out=$1.spelling
+
+  #Replaces the output file if output file already exists.
+  #Otherwise create a new output file.
+  if [ -e "$out" ]
+  then
+    echo "$0 replacing $out file"
+    rm "$out"
+  else
+    echo "$0 creating $out file"
+  fi
+
+  #Iterates through all the words in the file.
+  for word in $(cat "$file"); do
+
+    #Adds mispelled words to the output file
+    if ! grep -qiw $word /usr/share/dict/words
+    then
+      echo $word >> "$out"
+    fi
+  done
+
+  #counts the number of mispelled words
+  tot_err=$(wc -l "$out")
+
+  #counts the number of unique mispelled words
+  uni_err=$(sort -u "$out" | wc -l)
+  echo "$0 processed $file and found $tot_err spelling errors $uni_err of which are unique."
+  shift
+done
+
+exit 0

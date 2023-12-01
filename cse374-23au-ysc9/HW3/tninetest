@@ -1,0 +1,102 @@
+#!/bin/bash
+#
+#Author: Vincent Choo
+#Date: 11/2/2023
+#UWNet ID: ysc9
+#Homework 3: Scripting Project
+#
+#Perform a series of tests to the given executable and testfile for basic
+#functionality. Prints the results of these test to the given output file.
+
+#Throws and error if there is an incorrect number of arguments
+if [ $# -lt 3 ]; then
+  echo "Usage: tninetest OUTPUT EXECUTABLE TESTFILE..." 1>&2
+  exit 1
+fi
+
+out="$1"
+shift
+x="$1"
+shift
+
+#throws and error if the second input is not an executable file
+if [ ! -x "$x" ]; then
+  echo "Usage: tninetest OUTPUT EXECUTABLE TESTFILE..." 1>&2
+  exit 1
+fi
+
+echo "Testing $x" > "$out"
+date >> "$out"
+
+#tests to see if the executable is usable
+#prints test results to output file
+./"$x" > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "Test Usability ... SUCCESS" >> "$out"
+else
+    echo "Test Usability ... FAILURE" >> "$out"
+fi
+
+#tests to see if executable can handle bad dictionaries
+#Prints test results to output file
+./"$x" 404.txt > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "Test Handle Bad Dictionary ... SUCCESS" >> "$out"
+else
+    echo "Test Handle Bad Dictionary ... FAILURE" >> "$out"
+fi
+
+#Tests to se if executable can load a dictionary
+#prints test results to output file.
+./"$x" smallDictionary.txt <<< $'exit' > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    echo "Test Load Dictionary ... SUCCESS" >> "$out"
+else
+    echo "Test Load Dictionary ... FAILURE" >> "$out"
+fi
+
+#tests to see if executable can return expected value
+#given the inputs and dictionary. Prints results to output file
+./"$x" smallDictionary.txt << INPUT >> testoutput
+53556
+exit
+INPUT
+if grep -q "jello" testoutput 2>/dev/null; then
+    echo "Test Find Word ... SUCCESS" >> "$out"
+else
+    echo "Test Find Word ... FAILURE" >> "$out"
+fi
+rm "testoutput"
+
+#iterates through all the test files
+while [ $# -gt 0 ]; do
+    test="$1"
+    shift
+    down=0
+
+    #Download testfile if it doesn exists in the directory.
+    #If it does not exist, skip the file and print message to output file
+    if [ ! -e "$test" ]; then
+        down=1
+        wget "https://courses.cs.washington.edu/courses/cse374/23au/assignments/$test" > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo "Skipping $test" >> "$out"
+            continue
+        fi
+    fi
+
+    echo "Testing $test" >> "$out"
+
+    #Tests excutable with testfiles. Print results to output file.
+    cat "$test" | ./"$x" smallDictionary.txt > /dev/null 2>&1
+    if [ "$?" -eq 0 ]; then
+        echo "Test $test ... SUCCESS" >> "$out"
+    else
+        echo "Test $test ... FAILURE" >> "$out"
+    fi
+
+    #removes file if it was downloaded.
+    if [ $down -eq 1 ]; then
+      rm "$test"
+    fi
+done

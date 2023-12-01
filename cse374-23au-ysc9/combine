@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+#Author: Vincent Choo
+#Date: 10/17/2023
+#UWNet ID: ysc9
+#Homework 2: Part 1 Combine
+#
+#Combines the contents of given files to a new file with a given name
+
+#Throws an error if there are an incorrect number of arguments
+if [ $# -lt 2 ]
+then
+  echo "Usage: combine outputfilename [inputfilename ...]" 1>&2
+  exit 1
+fi
+
+out=$1
+shift
+
+#Throws an error if output file already exists
+if [ -e $out ]
+then
+  echo "Error: Output file should not exist" 1>&2
+  exit 1
+fi
+
+#combine the contents of all input files to the output file.
+cat "$@" &>> "$out"
+exit 0
